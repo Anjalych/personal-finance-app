@@ -186,15 +186,14 @@
         </div>
 
         {% set score = predicted_financial_score %}
-        {% if score < 550 %}
+        {% if score < 500 %}
         <div class="financial-category poor">Category: Poor<br></div>
-        {% elif score >= 550 and score < 650 %}
-        <div class="financial-category average">Category: Average<br></div>
-        {% elif score >= 650 and score < 750 %}
-        <div class="financial-category good">Category: Good<br>🟢 You're financially reliable. Keep managing your finances wisely to reach excellence.</div>
-        {% elif score >= 750 %}
-        <div class="financial-category excellent">Category: Excellent<br>🌟 Excellent score! You're in great financial shape.</div>
+        {% elif score >= 500 and score < 600 %}
+        <div class="financial-category average">Category: Good<br></div>
+        {% elif score >= 600 %}
+        <div class="financial-category excellent">Category: Excellent<br>🟢You're in great financial shape.</div>
         {% endif %}
+
 
         <form method="POST" action="{{ url_for('save') }}" onsubmit="return showSaveMessage();">
             <input type="hidden" name="month" value="{{ month }}">
