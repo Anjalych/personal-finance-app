@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Expense Tracker</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@700&display=swap" rel="stylesheet">
+
+    
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="static/style.css">
+
+    <style>
+        body {
+            background-color: #f7f9fb;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .container-sm {
+            max-width: 720px;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        .welcome-message {
+            font-size: 20px;
+        }
+
+        .form-label {
+            font-size: 14px;
+        }
+
+        .form-control, .form-select {
+            font-size: 14px;
+        }
+
+        h2, h4 {
+            font-size: 20px;
+        }
+
+        .btn {
+            font-size: 13px;
+        }
+
+        .top-links .btn {
+            padding: 3px 10px;
+            margin-bottom: 5px;
+        }
+
+        .expense-row input {
+            font-size: 13px;
+        }
+
+        .expense-row .btn {
+            padding: 3px 10px;
+        }
+    </style>
+
+    <script>
+        let count = 1;
+
+        function addCategory() {
+            const container = document.getElementById("expense-container");
+            const div = document.createElement("div");
+            div.classList.add('expense-row', 'row', 'align-items-center');
+
+            div.innerHTML = `
+                <div class="col-md-5 mb-2">
+                    <input type="text" class="form-control form-control-sm" name="label_${count}" placeholder="Category Name" required>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <input type="number" step="0.01" class="form-control form-control-sm" name="expense_${count}" placeholder="Amount" required>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeCategory(this)">Remove</button>
+                </div>
+            `;
+            container.appendChild(div);
+            count++;
+        }
+
+        function removeCategory(button) {
+            const div = button.closest('.expense-row');
+            div.remove();
+        }
+    </script>
+</head>
+<body> 
+
+<div class="container-sm">
+    <!-- Welcome & Navigation -->
+    <div class="mb-3 text-end top-links">
+        <h2 class="welcome-message text-start ms-1" style="font-family:  'Titillium Web', sans-serif; color: #2b2b2b;">
+            Welcome,{{ session['username'] }}!<br>
+            <span style="font-size: 16px; color: #4caf50; font-family: 'Georgia', serif;">Budget wisely, live freely</span>
+        </h2>
+
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-success me-1 btn-sm">Logout</a>
+        <a href="{{ url_for('history') }}" class="btn btn-outline-success me-1 btn-sm">Expense History</a>
+        <a href="{{ url_for('feedbacks') }}" class="btn btn-outline-success me-1 btn-sm">Feedback</a>
+        <a href="{{ url_for('delete_account') }}" class="btn btn-outline-success btn-sm">Delete Account</a>
+    </div>
+
+    <!-- Main Form Section -->
+    <div class="form-section">
+        <div class="text-center">
+            <h2 class="mb-3 fw-bold" style="color: #031546; background-color: #f8f8f8; padding: 6px 15px; border-radius: 8px; display: inline-block; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);">
+                Personal Financial Dashboard
+            </h2>
+        </div>
+
+        <form method="POST" class="mt-3">
+            <!-- Date and Month -->
+            <div class="mb-2">
+                <label class="form-label">Select Date:</label>
+                <input type="date" name="entry_date" class="form-control form-control-sm">
+            </div>
+            <div class="mb-2">
+                <label class="form-label">Select Month:</label>
+                <select name="month" class="form-select form-select-sm">
+                    <option value="">-- Select a Month --</option>
+                    <option value="January">January</option>
+                    <option value="February">February</option>
+                    <option value="March">March</option>
+                    <option value="April">April</option>
+                    <option value="May">May</option>
+                    <option value="June">June</option>
+                    <option value="July">July</option>
+                    <option value="August">August</option>
+                    <option value="September">September</option>
+                    <option value="October">October</option>
+                    <option value="November">November</option>
+                    <option value="December">December</option>
+                </select>
+            </div>
+
+            <!-- Income -->
+            <div class="mb-2">
+                <label class="form-label">Monthly Income:</label>
+                <input type="number" step="0.01" name="income" class="form-control form-control-sm" required>
+            </div>
+
+            <!-- Personal Info -->
+            <div class="row g-2">
+                <div class="col-6 col-md-3">
+                    <label class="form-label">Age:</label>
+                    <input type="number" name="age" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label">Dependents:</label>
+                    <input type="number" name="dependents" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label">Occupation:</label>
+                    <select class="form-select form-select-sm" name="occupation" required>
+                        <option value="">--Select--</option>
+                        <option value="0">Professional</option>
+                        <option value="1">Retired</option>
+                        <option value="2">Self-employed</option>
+                        <option value="3">Student</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label">City Tier:</label>
+                    <select class="form-select form-select-sm" name="city_tier" required>
+                        <option value="">--Select--</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Additional Financial Inputs -->
+            <div class="row g-2 mt-2">
+                <div class="col-md-4">
+                    <label class="form-label">Disposable Income:</label>
+                    <input type="number" step="0.01" name="Disposable_income" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Desired Savings:</label>
+                    <input type="number" step="0.01" name="Desired_savings" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Loan Repayment:</label>
+                    <input type="number" step="0.01" name="Loan_repayment" class="form-control form-control-sm" required>
+                </div>
+            </div>
+
+            <!-- Expenses Section -->
+            <div id="expense-container">
+                <h4 class="mt-3 mb-2">Expenses:</h4>
+            </div>
+                
+            <!-- Add Category Button -->
+            <div class="mt-2 mb-3">
+                <button type="button" class="btn btn-success btn-sm" onclick="addCategory()">+ Add Category</button>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-dark btn-sm w-100">Calculate</button>
+        </form>
+    </div>
+</div>
+
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

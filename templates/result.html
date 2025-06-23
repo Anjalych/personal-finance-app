@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Expense Summary</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #eef2f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+
+        .summary-boxes {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 20px;
+        }
+
+        .box {
+            flex: 1 1 45%;
+            background-color: #f1f4f8;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .box h3 {
+            margin: 8px 0;
+            font-size: 18px;
+            color: #34495e;
+        }
+
+        .box p {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        .highlight-box {
+            background-color: #e8f0fe;
+        }
+
+        .financial-category {
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 500;
+            text-align: center;
+            font-size: 15px;
+            margin: 20px 0;
+        }
+
+        .poor { background-color: #f8d7da; color: #721c24; }
+        .average { background-color: #fff3cd; color: #856404; }
+        .good { background-color: #d1ecf1; color: #0c5460; }
+        .excellent { background-color: #d4edda; color: #155724; }
+
+        form {
+            text-align: center;
+            margin-top: 25px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 8px 18px;
+            font-size: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2c80b4;
+        }
+
+        #saveMessage {
+            color: green;
+            font-weight: bold;
+            margin-top: 15px;
+            font-size: 15px;
+            display: none;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 25px;
+            color: #2980b9;
+            font-weight: 500;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .chart-container {
+            margin-top: 30px;
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.03);
+            height: 370px;
+            position: relative;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .chart-tab {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            margin: 0 5px 15px;
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .chart-tab:hover {
+            background-color: #2c80b4;
+        }
+
+        @media (max-width: 768px) {
+            .summary-boxes { flex-direction: column; }
+            .box { flex: 1 1 100%; }
+            h2 { font-size: 24px; }
+            .box h3 { font-size: 16px; }
+            .box p { font-size: 15px; }
+            .financial-category { font-size: 14px; }
+            button { font-size: 13px; padding: 6px 14px; }
+            a { font-size: 13px; }
+            .chart-container { height: 320px; padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📊 Financial Overview</h2>
+
+        <div class="summary-boxes">
+            <div class="box"><h3>Monthly Income</h3><p>₹{{ income }}</p></div>
+            <div class="box"><h3>Total Expenses</h3><p>₹{{ total }}</p></div>
+            <div class="box"><h3>Remaining Balance</h3><p>₹{{ balance }}</p></div>
+            <div class="box highlight-box"><h3>Predicted Expenses</h3><p>₹{{ predicted }}</p></div>
+            <div class="box highlight-box"><h3>Predicted Financial Score</h3><p style="color: #8e44ad;">{{ predicted_financial_score }}</p></div>
+        </div>
+
+        {% set score = predicted_financial_score %}
+        {% if score < 550 %}
+        <div class="financial-category poor">Category: Poor<br></div>
+        {% elif score >= 550 and score < 650 %}
+        <div class="financial-category average">Category: Average<br></div>
+        {% elif score >= 650 and score < 750 %}
+        <div class="financial-category good">Category: Good<br>🟢 You're financially reliable. Keep managing your finances wisely to reach excellence.</div>
+        {% elif score >= 750 %}
+        <div class="financial-category excellent">Category: Excellent<br>🌟 Excellent score! You're in great financial shape.</div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('save') }}" onsubmit="return showSaveMessage();">
+            <input type="hidden" name="month" value="{{ month }}">
+            <input type="hidden" name="income" value="{{ income }}">
+            <input type="hidden" name="age" value="{{ age }}">
+            <input type="hidden" name="dependents" value="{{ dependents }}">
+            <input type="hidden" name="occupation" value="{{ occupation }}">
+            <input type="hidden" name="city_tier" value="{{ city_tier }}">
+            <input type="hidden" name="total_expenses" value="{{ total }}">
+            <input type="hidden" name="balance" value="{{ balance }}">
+            <input type="hidden" name="predicted_expense" value="{{ predicted }}">
+            <input type="hidden" name="predicted_financial_score" value="{{ predicted_financial_score }}">
+            <button type="submit" id="saveBtn">💾 Save This Data</button>
+        </form>
+        <div id="saveMessage">✅ Data saved successfully!</div>
+
+        {% if warning %}
+        <p style="color: red; font-weight: bold; text-align: center;">{{ warning }}</p>
+        {% endif %}
+
+        <div class="chart-container">
+            <div style="text-align: center;">
+                <button onclick="showChart('pie')" class="chart-tab">Expense Chart</button>
+                <button onclick="showChart('bar1')" class="chart-tab">Income vs Expenses</button>
+                <button onclick="showChart('bar2')" class="chart-tab">Actual vs Predicted</button>
+            </div>
+            <canvas id="chartPie"></canvas>
+            <canvas id="chartBar1" style="display: none;"></canvas>
+            <canvas id="chartBar2" style="display: none;"></canvas>
+        </div>
+
+        <a href="/dashboard"> ← Back to Dashboard</a>
+    </div>
+
+    <script>
+        const income = parseFloat("{{ income }}");
+        const total = parseFloat("{{ total }}");
+        const predicted = parseFloat("{{ predicted }}");
+
+        if (total > income) {
+            alert("⚠️ Warning: Your total expenses exceed your income. Please consider revising your budget.");
+        }
+
+        function showChart(type) {
+            document.getElementById('chartPie').style.display = (type === 'pie') ? 'block' : 'none';
+            document.getElementById('chartBar1').style.display = (type === 'bar1') ? 'block' : 'none';
+            document.getElementById('chartBar2').style.display = (type === 'bar2') ? 'block' : 'none';
+        }
+
+        function showSaveMessage() {
+            document.getElementById('saveBtn').style.display = 'none';
+            document.getElementById('saveMessage').style.display = 'block';
+            return true;
+        }
+
+        const ctxPie = document.getElementById('chartPie').getContext('2d');
+        new Chart(ctxPie, {
+            type: 'pie',
+            data: {
+                labels: JSON.parse('{{ labels | tojson | safe }}'),
+                datasets: [{
+                    data: JSON.parse('{{ values | tojson | safe }}'),
+                    backgroundColor: [
+                        '#ff6384', '#36a2eb', '#ffce56', '#4bc0c0',
+                        '#9966ff', '#ff9f40', '#66bb6a', '#ab47bc',
+                        '#ef5350', '#26a69a'
+                    ],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Expense Category Distribution',
+                        font: { size: 18 }
+                    },
+                    legend: { position: 'right' },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${ctx.label}: ₹${ctx.parsed.toLocaleString()}`
+                        }
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        const ctxBar1 = document.getElementById('chartBar1').getContext('2d');
+        new Chart(ctxBar1, {
+            type: 'bar',
+            data: {
+                labels: ['Income', 'Total Expenses'],
+                datasets: [{
+                    label: 'Amount (₹)',
+                    data: [income, total],
+                    backgroundColor: ['#2ecc71', '#e74c3c']
+                }]
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Monthly Income vs Total Expenses',
+                        font: { size: 18 }
+                    },
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `₹${ctx.parsed.y.toLocaleString()}`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: value => `₹${value.toLocaleString()}`
+                        }
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        const ctxBar2 = document.getElementById('chartBar2').getContext('2d');
+        new Chart(ctxBar2, {
+            type: 'bar',
+            data: {
+                labels: ['Total Expenses', 'Predicted Expenses (ML)'],
+                datasets: [{
+                    label: 'Amount (₹)',
+                    data: [total, predicted],
+                    backgroundColor: ['#3498db', '#9b59b6']
+                }]
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Total vs Predicted Expenses (ML)',
+                        font: { size: 18 }
+                    },
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `₹${ctx.parsed.y.toLocaleString()}`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: value => `₹${value.toLocaleString()}`
+                        }
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    </script>
+</body>
+</html>
